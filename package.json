@@ -1,0 +1,13 @@
+{
+  "name": "Enclave-Server",
+  "description": "Enclave Server",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "test": "make test"
+  },
+  "dependencies": {
+    "express": "4.9.0",
+    "node-uuid": "1.4.0"    
+  }
+}

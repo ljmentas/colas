@@ -1,0 +1,76 @@
+'use strict';
+var logger = require('../util/logger').logger;
+
+
+var apiErrorCodes = {
+    '001': { code: 'WE-001', httpCode: 400, description: 'Invalid parameter received in request.' },
+    '002': { code: 'WE-002', httpCode: 500, description: 'Internal error occurred creating the enclave.' },
+    '003': { code: 'WE-003', httpCode: 404, description: 'Enclave does not exist.' },
+    '004': { code: 'WE-004', httpCode: 404, description: 'Resource does not exist.' },
+    '005': { code: 'WE-005', httpCode: 503, description: 'Server reached enclaves limit, please retry.' },
+    '999': { code: 'WE-999', httpCode: 500, description: 'Unexpected internal error occurred.' }
+
+};
+module.exports.apiErrorCodes = apiErrorCodes;
+
+var errorCodes = {
+    
+    UNCAUGHT_EXCEPTION: { code: '001', description: 'Uncaught exception in server.'},
+
+    
+    INVALID_ENCLAVE: { code: 'EM-001', description: 'Invalid Enclave.'},
+    HEALTH_CHECK_TIMEOUT: { code: 'EM-002', description: 'Enclave does not respond.'},
+    ENCLAVE_UNREACHABLE: { code: 'EM-003', description: 'Enclave can not be reached with messages.'},
+    BOOTSTRAP_SPAWN_FAIL: { code: 'EM-004', description: 'Error spawning bootstrap process.'},
+    BOOSTRAP_UNCAUGHT_EXCEPTION: { code: 'EM-005', description: 'Uncaught error in user code execution.'},
+    ENCLAVE_UNCAUGHT_EXCEPTION: { code: 'EM-006', description: 'Uncaught error in enclave execution.'},
+    UNKNOWN_MESSAGE: { code: 'EM-007', description: 'The message could not be processed.'},
+    BOOTSTRAP_UNREACHABLE: { code: 'EM-008', description: 'Bootstrap can not be reached with messages.'},
+    ENCLAVE_MANAGER_UNREACHABLE: { code: 'EM-009', description: 'EM can not be reached with messages.'},
+    FILE_SYSTEM: { code: 'EM-010', description: 'Error accessing the file system.'},
+    DOWNLOAD_ERROR: { code: 'EM-011', description: 'Error downloading user code.'},
+    ENCLAVE_NOT_MONITORED: { code: 'EM-012', description: 'Timeout expecting health check from EM.'},
+    SAME_ORIGIN_POLICY: { code: 'EM-013', description: 'Attempt to break through the same origin policy'},
+    UNAUTHORIZED: { code: 'EM-014', description: 'Attempt to perform a non authorized socket connection'},
+    IMPORTING_CODE: { code: 'EM-015', description: 'Error in importScripts method.'},
+    BAD_REQUEST: { code: 'EM-016', description: 'Invalid parameter received in request.'},
+    HEALTH_CHECK_FAILURE: { code: 'EM-017', description: 'Error checking enclave health.'},
+    
+    EXTENSIONS_LOADING: { code: 'EM-019', description: 'Exception loading enclave extensions.'},
+    BOOTSTRAP_RUNTIME_ERROR: { code: 'EM-020', description: 'Runtime exception on user code execution'},
+    CONNECTION_TIMEOUT: { code: 'EM-021', description: 'Socket connection never happened.'},
+    BOOSTRAP_UNEXPECTED_ENDED: { code: 'EM-022', description: 'Bootstrap unexpectedly ended.'},
+    SERVER_ENCLAVES_LIMIT_REACHED: { code: 'EM-023', description: 'Active enclaves limit reached on this Server.'},
+    INVALID_CONTAINER_RUNTIME: { code: 'EM-030', description: 'Invalid runtime'},
+    ENCLAVE_NEVER_REGISTERED: { code: 'EM-031', description: 'Enclave never registered back.'},
+    ENCLAVE_PORT_MAPPER: { code: 'EM-032', description: 'Cannot map container local port'},
+    CONTAINER_CREATION_FAILED: { code: 'EM-033', description: 'Container creation failed'},
+    PARSING_USER_CODE: { code: 'EM-034', description: 'Container error executing client code'}
+};
+module.exports.errorCodes = errorCodes;
+
+var sendErrorResponse = function(error, req, res, message) {
+    var response = {error: {code: error.httpCode,
+        message: error.description,
+        // TODO: Complete request id
+        requestId: req.requestContext !== undefined ? req.requestContext.req_id : '',
+        errors: [{
+            domain: 'ISEF-Webenclaves',
+            reason: error.code,
+            message: message === undefined ? '' : message,
+            extendedHelp: '',
+            sendReport: ''
+        }]
+    }
+    };
+    res.status(error.httpCode).send(response)
+
+};
+module.exports.sendErrorResponse = sendErrorResponse;
+
+/* jshint -W098*/
+module.exports.expressErrorHandler = function(err, req, res, next) {
+    //console.error(err.stack);
+    logger.error('Unhandled exception caught: ' + String(err.stack), errorCodes.UNCAUGHT_EXCEPTION, req.requestContext);
+    sendErrorResponse(apiErrorCodes['999'], req, res);
+};
