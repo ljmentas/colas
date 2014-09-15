@@ -3,7 +3,7 @@ var logger = require('../util/logger').logger;
 
 
 var apiErrorCodes = {    
-    '999': { code: 'WE-999', httpCode: 500, description: 'Unexpected internal error occurred.' }
+    '999': { code: '999', httpCode: 500, description: 'Unexpected internal error occurred.' }
 
 };
 module.exports.apiErrorCodes = apiErrorCodes;
